@@ -50,49 +50,81 @@ The local Bayes FDR is estimated to be the sum of conditional probabilities in t
   \item{Pi}{Vector of the estimated probabilities for each of the \code{x^N} possible vectors of association status.}
 }
 \references{
-Heller, Ruth, and Daniel Yekutieli. "Replicability analysis for Genome-wide Association studies." \emph{arXiv preprint arXiv:1209.2829} (2012).
+Heller, R., & Yekutieli, D. (2014). Replicability analysis for genome-wide association studies. \emph{The Annals of Applied Statistics}, 8(1), 481-498.
+
+Heller, R., Yaacoby, S., & Yekutieli, D. (2014). repfdr: a tool for replicability analysis for genome-wide association studies. \emph{Bioinformatics}, btu434.
 }
 \author{
 Ruth Heller, Shachar Kaufman, Shay Yaacoby, Daniel Yekutieli.
 }
 \examples{
-data(zmat)
+#### Example 1: a simulation; each feature in each study has two association states,
+####            null and positive:
 
-## Each feature in each study has three association states, negative, null, or positive: 
+# a) Replicablity analysis:
+data(binned_zmat_sim) # this loads the binned z-scores as well as the (estimated) probabilities
+# in each bin for each state 
+output.rep <- repfdr(pbz_sim, bz_sim, "replication")
+BayesFdr.rep <- output.rep$mat[,"Fdr"]
+Rej <- (BayesFdr.rep <= 0.05)
+sum(Rej)
 
-# The z-scores are binned and priors are given to each hypothesis state:
-input.to.repfdr3 <- ztobins(zmat, 3, plot = TRUE, df = 15)
-pbz    <- input.to.repfdr3$pdf.binned.z
-bz     <- input.to.repfdr3$binned.z.mat
+# which of the tests are true replicability findings? (we know this since the data was simulated)
+data(hmat_sim)
+true.rep   <- apply(hmat_sim,1,function(y){ sum(y==1)>1 })
+
+
+# Compute the false discovery proportion (FDP) for replicability:
+sum(Rej * !true.rep) / sum(true.rep)
+
+# we can use the previously calculated Pi for further computations (e.g meta-analysis):
+Pi_sim <- output.rep$Pi
+
+# b) meta-analysis:
+output.meta <- repfdr(pbz_sim, bz_sim, "meta-analysis", Pi.previous.result = Pi_sim)
+
+BayesFdr.meta <- output.meta$mat[,"Fdr"]
+Rej <- (BayesFdr.meta <= 0.05)
+sum(Rej)
+
+# which of the tests are true association findings? (we know this since the data was simulated)
+true.assoc <- rowSums(hmat_sim) >= 1
+
+# Compute the false discovery proportion (FDP) for association:
+sum(Rej * !true.assoc) / sum(true.assoc) 
+
+#### Example 2: SNPs data; each SNP in each study has three association states,
+####            negative, null, or positive: 
+
+# load the bins of the z-scores and their probabilities.
+data(binned_zmat)
 
 # load the prior probabilities for each association status vector.
-# (this vector is computed with piem())
 data(Pi)
-round(Pi,6)
+Pi # the proportions vector was computed using piem()
+   # with the following command: Pi <- piem(pbz, bz)$last.iteration
 
-# Fdr calculation for replicablity analysis:
-output3 <- repfdr(pbz, bz, "replication",Pi.previous.result=Pi,
-                  control = em.control(nr.threads = 2))
-# converge after 209 iterations.
-# Set nr.threads = 0 to optimal use of threads.
+# a) replicablity analysis:
+output.rep <- repfdr(pbz, bz, "replication",Pi.previous.result=Pi)
+BayesFdr.rep <- output.rep$mat[,"Fdr"]
+Rej <- sum(BayesFdr.rep <= 0.05)
+sum(Rej)
 
-BayesFdr <- output3$mat[,"Fdr"]
-sum(BayesFdr <= 0.05) # 119
-
-# The posterior probabilities for the features with Bayes FDR at most 0.05:
-post <- ldr(pbz,bz[order(BayesFdr)[1:5],],Pi)
+# The posterior probabilities for the first five features with Bayes FDR at most 0.05:
+post <- ldr(pbz,bz[order(BayesFdr.rep)[1:5],],Pi)
 round(post,4)
 
 # posteriors for a subset of the association status vectors can also be reported:
-H <- hconfigs( dim(zmat)[2], 3)
+H <- hconfigs( dim(bz)[2], 3)
 h.replicability = apply(H, 1, function(y) {sum(y == 1)> 1 | sum(y == -1) >1})
-post <- ldr(pbz,bz[order(BayesFdr)[1:5],],Pi,h.vecs= which(h.replicability==1))
+post <- ldr(pbz,bz[order(BayesFdr.rep)[1:5],],Pi,h.vecs= which(h.replicability==1))
 round(post,4)
 
-# Fdr calculation for meta-analysis:
-output3.a <- repfdr(pbz, bz, "meta-analysis", Pi.previous.result = Pi) 
-BayesFdr.a <- output3.a$mat[,"Fdr"]
-sum(BayesFdr.a <= 0.05)  # 239
+# b) meta-analysis:
+output.meta <- repfdr(pbz, bz, "meta-analysis", Pi.previous.result = Pi) 
+BayesFdr.meta <- output.meta$mat[,"Fdr"]
+Rej <- sum(BayesFdr.meta <= 0.05)
+sum(Rej)
 
 \dontrun{ 
   ## manhattan plot (ploting can take a while):
@@ -100,50 +132,15 @@ sum(BayesFdr.a <= 0.05)  # 239
   data(SNPlocations)
   par(mfrow=c(2,1))
   # Replication 
-  manhattan(dataframe=cbind(SNPlocations,P=BayesFdr),ymax=10.5,pch=20,
+  manhattan(dataframe=cbind(SNPlocations,P=BayesFdr.rep),ymax=10.5,pch=20,
             limitchromosomes=1:4,suggestiveline=-log(0.05,10),genomewideline=F,cex=0.25,
             annotate=SNPlocations$SNP[BayesFdr<=0.05],main="Replication")
   # Association
-  manhattan(dataframe=cbind(SNPlocations,P=BayesFdr.a),ymax=10.5,cex=0.25,
+  manhattan(dataframe=cbind(SNPlocations,P=BayesFdr.meta),ymax=10.5,cex=0.25,
             limitchromosomes=1:4,suggestiveline=-log(0.05,10),genomewideline=F,pch=20,
             annotate=SNPlocations$SNP[BayesFdr<=0.05],main="Meta-analysis")
   par(mfrow=c(1,1))
 }
-
-## Each feature in each study  has two  association states:
-data(simzmat)
-
-input.to.repfdr <- ztobins(simzmat, 2, plot = TRUE, df = 15)
-pbz <- input.to.repfdr$pdf.binned.z
-bz  <- input.to.repfdr$binned.z.mat
-
-# which of the tests are true replication\\association (know this since the data was simulated!)?
-true.rep   <- apply(Hmat,1,function(y){ sum(y==1)>1 | sum(y==-1)>1 })
-true.assoc <- rowSums(abs(Hmat)) >= 1 
-
-output <- repfdr(pbz, bz, "replication",control = em.control(nr.threads = 2))
-# converge after 68 iterations.
-# Set nr.threads = 0 to optimal use of threads.
-
-BayesFdr <- output$mat[,"Fdr"]
-Rej <- (BayesFdr <= 0.05)
-sum(Rej) # = 839
-
-# Check whether the Fdr controlled:
-sum(Rej * !true.rep) / sum(true.rep)     # FDP = 0.0388
-
-Pi <- output$Pi
-round(Pi,6) # close to the true proportions in the data, see help(simzmat)
-
-outputa <- repfdr(pbz, bz, "meta-analysis", Pi.previous.result = Pi)
-
-BayesFdr <- outputa$mat[,"Fdr"]
-Rej <- (BayesFdr <= 0.05)
-sum(Rej) # = 964 
-
-# Check whether the Fdr controlled:
-sum(Rej * !true.assoc) / sum(true.assoc) # FDP = 0.0466
-
 }
 \keyword{Replicability}
 \keyword{GWAS}

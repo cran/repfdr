@@ -1,4 +1,3 @@
-import(locfdr)
 export(repfdr,piem,ldr,hconfigs,em.control,ztobins,manhattan)
 useDynLib(repfdr)
 

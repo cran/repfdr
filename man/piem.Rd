@@ -41,16 +41,23 @@ Heller, Ruth, and Daniel Yekutieli. "Replicability analysis for Genome-wide Asso
 }
 \examples{
 \dontrun{
-data(zmat)
-input.to.piem <- ztobins(zmat, 3, plot = TRUE)
-pbz    <- input.to.piem$pdf.binned.z
-bz     <- input.to.piem$binned.z.mat
+data(binned_zmat)
+output_piem <- piem(pbz, bz)
 
-output <- piem(pbz, bz, control = em.control(verbose = TRUE,nr.threads = 2))
-# converge after 209 iterations.
-# iterations are printed
-# Set nr.threads = 0 to optimal use of threads.
+# extract the last iteration to use it in repfdr (see help(repfdr)):
+Pi1 <- output_piem$last.iteration
+data(Pi)
+stopifnot(all.equal(Pi,Pi1))
 
-Pi <- output$last.iteration
+# simulation data:
+data(binned_zmat)
+output_piem_sim <- piem(pbz_sim, bz_sim)
+Pi_sim <- output_piem_sim$last.iteration
+
+# following are the true proportions in the data: (see help(hmat_sim) for data generation details.)
+f <- c(0.895,0.005,0.005,0.02,0.005,0.02,0.02,0.03) 
+
+# the estimation vs the true proportions:
+cbind(round(Pi_sim,6),f)
 }
 }

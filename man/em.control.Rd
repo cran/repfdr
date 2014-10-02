@@ -38,14 +38,10 @@ A list with the input values.
 }
 \examples{
 \dontrun{
-data(zmat)
-input3 <- ztobins(zmat, 3, plot = FALSE)
-pbz    <- input3$pdf.binned.z
-bz     <- input3$binned.z.mat
-
+data(binned_zmat)
 out <- repfdr(pbz,bz,"replication",
               control = em.control(pi.initial = c(0.48,rep(0.02,26)),
               verbose = TRUE, nr.threads = 1))
-# convergence after 194 iterations; iterations are printed; run bit slower (1 thread)
+# iterations are printed; run bit slower (1 thread)
 }
 }

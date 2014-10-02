@@ -18,9 +18,9 @@ Optional study names to display.
 }
 }
 \details{
- This  matrix should be used when selecting the rows indices for the vectors association status that are in the non-null set, specified by the used in \code{non.null.rows} in the function \code{\link{repfdr}}.
+ This  matrix should be used when selecting the rows indices for the association status vectors that are in the non-null set, specified by the used in \code{non.null.rows} in the function \code{\link{repfdr}}.
 }
-\value{Matrix with rows indicating the possible vectors of association status.
+\value{Matrix with rows indicating all the possible vectors of association status.
  
 
 }
@@ -28,11 +28,11 @@ Optional study names to display.
 \code{\link{repfdr}}
 }
 \examples{
-(H <- hconfigs(n.studies = 3))
 
+(H <- hconfigs(n.studies = 3))
 # in replication analysis the non-null vectors are:
 H[apply(H,1,function(y){ sum(y==1)>1 | sum(y==-1)>1 }),]
-# in meta-analysis analysis the non-null is only one vector:
+# in meta-analysis there is only one null vector (c(0,0,0)):
 H[rowSums(abs(H))!=0,]
 
 hconfigs(n.studies = 3, n.association.status= 2)

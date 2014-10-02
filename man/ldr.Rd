@@ -38,27 +38,22 @@ Matrix with rows that contain for each of the vectors of association status  the
 \examples{
 
 \dontrun{
-data(zmat)
-
-# The z-scores are binned and priors are given to each hypothesis state:
-input3 <- ztobins(zmat, 3, plot = TRUE)
-pbz    <- input3$pdf.binned.z
-bz     <- input3$binned.z.mat
+data(binned_zmat)
+data(Pi)
 
 # Fdr calculation:
-output3 <- repfdr(pbz, bz, "replication") # converge after 209 iterations.
+output3 <- repfdr(pbz, bz, "replication",Pi.previous.result = Pi)
 
 BayesFdr <- output3$mat[,"Fdr"]
-sum(BayesFdr <= 0.05) # 119
+sum(BayesFdr <= 0.05)
 
-Pi <- output3$Pi
-
-# The posterior probabilities for the features with Bayes FDR at most 0.05:
+# The posterior probabilities for the the first five features with Bayes FDR at most 0.05:
 post <- ldr(pbz,bz[which(BayesFdr <= 0.05)[1:5],],Pi)
 round(post,4)
 
-# posteriors for a subset of the association status vectors can also be reported:
-post <- ldr(pbz,bz[which(BayesFdr <= 0.05)[1:5],],Pi,h.vecs= 1:5)
+# posteriors for a subset of the association status vectors can also be reported,
+# here the subset is the four first association status vectors:
+post <- ldr(pbz,bz[which(BayesFdr <= 0.05)[1:5],],Pi,h.vecs= 1:4)
 round(post,4)
 }
 }

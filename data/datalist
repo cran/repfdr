@@ -1,3 +1,6 @@
+Pi
 SNPlocations
-simzmat: Hmat simzmat
-zmat
+binned_zmat: bz pbz
+binned_zmat_sim: bz_sim pbz_sim
+hmat_sim
+zmat_sim
