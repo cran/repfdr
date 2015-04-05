@@ -17,9 +17,7 @@ data(zmat_sim)
 head(zmat_sim)
 
 \dontrun{
-  # install.packages("locfdr")
-  library(locfdr)
-  input.to.repfdr <- ztobins(zmat_sim, 2, plot = TRUE, df = 15)
+  input.to.repfdr <- ztobins(zmat_sim, 2)
   pbz_sim1 <- input.to.repfdr$pdf.binned.z
   bz_sim1  <- input.to.repfdr$binned.z.mat
   
